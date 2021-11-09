@@ -7,10 +7,6 @@ const dbname = process.env.NODE_ENV !== 'test'
 
 export async function connectMongo(): Promise<typeof mongoose> {
   return mongoose.connect(`${mongouri}${dbname}`)
-    .catch(e => {
-      console.log(e)
-      return mongoose
-    })
 }
 
 export async function disconnectMongo(): Promise<void> {
