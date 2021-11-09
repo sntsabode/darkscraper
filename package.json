@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha -r ts-node/register tests/index.test.ts --timeout 900000"
+    "test": "mocha -r ts-node/register tests/index.test.ts --timeout 900000",
+    "start:dry": "yarn build && node ./dist/index.js",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
