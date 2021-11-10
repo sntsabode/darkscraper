@@ -1,9 +1,10 @@
 import { ISaveDarkLinkResult, saveDarkLink } from '../models/darklink.model'
-import Requester, { IDarkSearchResponseBodyData } from '../requester'
+import Requester, { IDarkSearchResponse, IDarkSearchResponseBodyData } from '../requester'
+import { Maybe } from '../utils'
 import Logger from '../utils/logger'
 
 type link = string
-export type IDarkSearchResponse = [
+export type IDarkSearchResponseTuple = [
   link,
   () => Promise<ISaveDarkLinkResult>
 ]
@@ -14,28 +15,43 @@ export default class DarkSearch {
     private page = 1
   ) { }
 
-  async searchBubbleError() {
-    return this.search().catch(
+  search = this.searchFactory(Requester.darkSearch)
+  searchDebounced = this.searchFactory(Requester.darkSearchDebounced)
+
+  searchBubbleError = this.searchBubbleErrorFactory(this.search)
+  searchDebouncedBubbleError = this.searchBubbleErrorFactory(this.searchDebounced)
+
+  private searchBubbleErrorFactory(
+    searchFunc: () => Promise<Maybe<IDarkSearchResponseTuple[]>>
+  ): () => Promise<Maybe<IDarkSearchResponseTuple[]>> {
+    return async () => searchFunc().catch(
       (e) => { Logger.debug(e); return undefined }
     )
   }
 
-  async search(): Promise<IDarkSearchResponse[]> {
-    Logger.debug(this.page)
+  private searchFactory(
+    searchFunc: (
+      query: string,
+      page: number
+    ) => Maybe<Promise<IDarkSearchResponse>>
+  ): () => Promise<Maybe<IDarkSearchResponseTuple[]>> {
+    return async () => {
+      const res = await searchFunc(
+        this.query,
+        this.page
+      )
 
-    const res = await Requester.darkSearch(
-      this.query,
-      this.page
-    )
+      Logger.debug<any>('DarkSearchInstance', this.query, this.page, res)
 
-    this.page++
+      if (!res) return
 
-    Logger.debug(res)
+      this.page++
 
-    return res.body.data.map(data => [
-      data.link,
-      this.saveLinkFactory(data)
-    ])
+      return res.body.data.map(data => [
+        data.link,
+        this.saveLinkFactory(data)
+      ])
+    }
   }
 
   private saveLinkFactory(
