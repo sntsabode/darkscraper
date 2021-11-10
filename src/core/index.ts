@@ -1,26 +1,28 @@
-import DarkSearch, { IDarkSearchResponse } from '../darksearch'
-import { ISaveDarkLinkResult } from '../models/darklink.model'
+import { IDarkSearchResponseTuple } from '../darksearch'
 import Requester from '../requester'
+import { HandleError } from '../utils'
 import ErrorStack from '../utils/errorstack'
-import Logger from '../utils/logger'
+import Logger, { getLogLevel, LogLevels } from '../utils/logger'
 import { connectMongo } from '../utils/mongoose'
+import Reconnaissance from './Reconnaissance'
 
-export default class Core {
-  #ErrorStack: ErrorStack
-  #DarkSearches: DarkSearch[]
+export default class Core extends HandleError {
+  #Recon: Reconnaissance
 
   constructor(
     baseQueries: string[],
-    panicTrigger = 10
+    panicTrigger = 10,
+    reconThrottle = 1000
   ) {
-    this.#ErrorStack = new ErrorStack(panicTrigger)
+    super()
 
-    this.#DarkSearches = baseQueries.map(
-      bq => new DarkSearch(bq)
-    )
+    this.#Recon = new Reconnaissance(baseQueries, reconThrottle)
+    ErrorStack.panicTrigger = panicTrigger
   }
 
-  async setup(): Promise<void> {
+  async setup(ll: LogLevels): Promise<void> {
+    Logger.logLevel = getLogLevel(ll)
+
     return connectMongo() as unknown as Promise<void>
   }
 
@@ -28,41 +30,20 @@ export default class Core {
 
   }
 
-  #RUN = true
   async runPerpetual() {
-    while (this.#RUN) {
-      await this.runSingleIteration()
-    }
-  }
-
-  private async runSingleIteration() {
-    const res = await this.runDarkSearches()
-
-    const [
-      pageProcessingResults,
-      saveResults
-    ] = await Promise.all([
-      this.callDarkSearchResponseLinks(res),
-      this.saveDarkSearchLinks(res)
+    return Promise.all([
+      this.#Recon.runReconnaissance()
     ])
-
-    Logger.debug(pageProcessingResults)
-    Logger.debug(saveResults)
   }
 
-  async runDarkSearches(): Promise<(IDarkSearchResponse[] | undefined)[]> {
-    return Promise.all(this.#DarkSearches.map(
-      ds => ds.searchBubbleError()
-    ))
-  }
-
-  async callDarkSearchResponseLink([link]: IDarkSearchResponse) {
-    const resp = await Requester.getOnion(link)
+  async callDarkSearchResponseLink([link]: IDarkSearchResponseTuple) {
+    const res = await Requester.getOnion(link)
       .catch(e => this.handleError(e))
 
-    if (!resp) return
+    if (!res) return
 
-    console.log(resp)
+    Logger.debug<any>(res, res.headers)
+    Logger.debug<number | string>(Requester.GETOnionCount, '\n')
 
 
     //// Continue....
@@ -70,7 +51,7 @@ export default class Core {
   }
 
   async callDarkSearchResponseLinks(
-    res: (IDarkSearchResponse[] | undefined)[]
+    res: (IDarkSearchResponseTuple[] | undefined)[]
   ) {
     // It's best these calls run sequentially. The function
     // used to call the onion links spawns a child process and
@@ -84,24 +65,5 @@ export default class Core {
         await this.callDarkSearchResponseLink(j)
       }
     }
-  }
-
-  async saveDarkSearchLinks(
-    res: (IDarkSearchResponse[] | undefined)[]
-  ): Promise<(ISaveDarkLinkResult[] | undefined)[]> {
-    return Promise.all(
-      res.map(
-        (res) => !!res
-          ? Promise.all(res.map(([,saveLink]) => saveLink()))
-          : res
-      )
-    )
-  }
-
-  private handleError<E extends { message?: string }>(
-    ...e: E[]
-  ): void {
-    Logger.error(...e)
-    this.#ErrorStack.addError()
   }
 }
