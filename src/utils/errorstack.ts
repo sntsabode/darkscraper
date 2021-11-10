@@ -1,7 +1,17 @@
 import { panic } from '.'
 
 export default class ErrorStack {
-  constructor(
+  static instance = new ErrorStack(9)
+
+  static set panicTrigger(t: number) {
+    ErrorStack.instance.panicTrigger = t
+  }
+
+  static get panicTrigger(): number {
+    return this.panicTrigger
+  }
+
+  private constructor(
     private panicTrigger: number
   ) { }
 
