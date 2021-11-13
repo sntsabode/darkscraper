@@ -26,7 +26,10 @@ export default class Reconnaissance {
   }
 
   private work = async () => {
+    console.time('_')
     const func = await this.#throttle()
+    console.log('Throttle: ')
+    console.timeEnd('_')
     return func()
   }
 
