@@ -1,6 +1,6 @@
 import { fetchDarkLinks, ISaveDarkLinkResult, saveDarkLink, updateDarkLinkPath } from '../models/darklink.model'
 import Requester, { IGetOnionResponse } from '../requester'
-import { getDomainAndPath, Maybe } from '../utils'
+import { getDomainAndPath, isURL, Maybe } from '../utils'
 import Logger from '../utils/logger'
 import HtmlOperator from './HtmlOperator'
 
@@ -63,15 +63,28 @@ export default class Infiltrator {
     while (this.#work) {
       const [func, res] = await Promise.all([
         this.throttle(this.runSingleIteration),
-        (() => Promise.all(links.map(
-          link => saveDarkLink(link)
-        )))() as Promise<ISaveDarkLinkResult[]>
+        this.saveDarkLinks(links)
       ])
 
       Logger.debug<any>('Successfully acquired links, save results: ', res)
 
       links = await func(links)
     }
+  }
+
+  async saveDarkLinks(links: string[]): Promise<Maybe<ISaveDarkLinkResult>[]> {
+    return Promise.all(links.map(
+      link => this.saveDarkLink(link)
+    ))
+  }
+
+  async saveDarkLink(link: string): Promise<Maybe<ISaveDarkLinkResult>> {
+    const isUrl = isURL(link)
+    if (!isUrl) {
+      return
+    }
+
+    return saveDarkLink(link)
   }
 
   async throttle<T extends Function>(cb: T): Promise<T> {
