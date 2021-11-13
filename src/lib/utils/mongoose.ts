@@ -5,8 +5,6 @@ const dbname = process.env.NODE_ENV !== 'test'
   ? 'darkscraper'
   : 'darkscraper_test_two'
 
-console.log(dbname)
-
 export async function connectMongo(): Promise<typeof mongoose> {
   return mongoose.connect(`${mongouri}${dbname}`, {
     autoIndex: true
