@@ -1,5 +1,5 @@
-import DarkSearch, { IDarkSearchResponseTuple } from '../darksearch'
-import { ISaveDarkLinkResult } from '../models/darklink.model'
+import DarkSearch from '../darksearch'
+import { ISaveDarkLinkResult, saveDarkLink } from '../models/darklink.model'
 import { Maybe, waitFactory } from '../utils'
 import Logger from '../utils/logger'
 
@@ -40,22 +40,17 @@ export default class Reconnaissance {
     Logger.debug(saveResults)
   }
 
-  private runDarkSearchesFactory = (
-    func: 'searchBubbleError' | 'searchDebouncedBubbleError'
-  ): () => Promise<Maybe<IDarkSearchResponseTuple[]>[]> =>
-    async () => Promise.all(this.#DarkSearches.map(
-      ds => ds[func]()
+  runDarkSearches = async (): Promise<Maybe<string[]>[]> =>
+    Promise.all(this.#DarkSearches.map(
+      ds => ds.search()
     ))
 
-  runDarkSearches = this.runDarkSearchesFactory('searchBubbleError')
-  runDarkSearchesDebounced = this.runDarkSearchesFactory('searchDebouncedBubbleError')
-
   saveDarkSearchLinks = async (
-    res: Maybe<IDarkSearchResponseTuple[]>[]
+    res: Maybe<string[]>[]
   ): Promise<Maybe<ISaveDarkLinkResult[]>[]> => Promise.all(
     res.map(
       (res) => !!res
-        ? Promise.all(res.map(([,saveLink]) => saveLink()))
+        ? Promise.all(res.map((link) => saveDarkLink(link)))
         : res
     )
   )
