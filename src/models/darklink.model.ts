@@ -84,6 +84,6 @@ export async function saveDarkLink(
 }
 
 
-export async function fetchDarkLinks(): Promise<IDarkLinkModel[]> {
-  return DarkLinkModel.find({ })
+export async function fetchDarkLinks(limit = 1000): Promise<IDarkLinkModel[]> {
+  return DarkLinkModel.find({ }).limit(limit)
 }
