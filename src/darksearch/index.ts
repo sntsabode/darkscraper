@@ -1,13 +1,6 @@
-import { ISaveDarkLinkResult, saveDarkLink } from '../models/darklink.model'
-import Requester, { IDarkSearchResponse, IDarkSearchResponseBodyData } from '../requester'
+import Requester, { IDarkSearchResponse } from '../requester'
 import { Maybe } from '../utils'
 import Logger from '../utils/logger'
-
-type link = string
-export type IDarkSearchResponseTuple = [
-  link,
-  () => Promise<ISaveDarkLinkResult>
-]
 
 export default class DarkSearch {
   constructor(
@@ -16,14 +9,11 @@ export default class DarkSearch {
   ) { }
 
   search = this.searchFactory(Requester.darkSearch)
-  searchDebounced = this.searchFactory(Requester.darkSearchDebounced)
-
   searchBubbleError = this.searchBubbleErrorFactory(this.search)
-  searchDebouncedBubbleError = this.searchBubbleErrorFactory(this.searchDebounced)
 
   private searchBubbleErrorFactory(
-    searchFunc: () => Promise<Maybe<IDarkSearchResponseTuple[]>>
-  ): () => Promise<Maybe<IDarkSearchResponseTuple[]>> {
+    searchFunc: () => Promise<Maybe<string[]>>
+  ): () => Promise<Maybe<string[]>> {
     return async () => searchFunc().catch(
       (e) => { Logger.debug(e); return undefined }
     )
@@ -34,7 +24,7 @@ export default class DarkSearch {
       query: string,
       page: number
     ) => Maybe<Promise<IDarkSearchResponse>>
-  ): () => Promise<Maybe<IDarkSearchResponseTuple[]>> {
+  ): () => Promise<Maybe<string[]>> {
     return async () => {
       const res = await searchFunc(
         this.query,
@@ -47,32 +37,8 @@ export default class DarkSearch {
 
       this.page++
 
-      return res.body.data.map(data => [
-        data.link,
-        this.saveLinkFactory(data)
-      ])
+      return res.body.data.map(data => data.link)
     }
-  }
-
-  private saveLinkFactory(
-    data: IDarkSearchResponseBodyData
-  ): () => Promise<ISaveDarkLinkResult> {
-    const {
-      protocol,
-      hostname,
-      pathname,
-      search
-    } = new URL(data.link)
-
-    const domain = protocol + hostname
-    const path = pathname + search
-
-    Logger.debug(domain, path)
-
-    return () => saveDarkLink(domain, {
-      path,
-      title: data.title
-    })
   }
 
   get getPage(): number { return this.page }
