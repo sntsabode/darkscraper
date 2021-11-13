@@ -5,4 +5,6 @@ describe('darkscraper test suite', () => {
   require('./requester/index.test')
   require('./darksearch/index.test')
   require('./core/Reconnaissance.test')
+  require('./core/HtmlOperator.test')
+  require('./core/Infiltrator.test')
 })
