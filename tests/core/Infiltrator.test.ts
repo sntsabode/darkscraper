@@ -4,27 +4,20 @@ yarn run mocha -r ts-node/register tests/core/Infiltrator.test.ts --timeout 9000
 
 import { assert } from 'chai'
 import Infiltrator from '../../src/core/Infiltrator'
-import { IDarkSearchResponseTuple } from '../../src/darksearch'
 import { saveDarkLink } from '../../src/models/darklink.model'
+import { Maybe } from '../../src/utils'
 import { connectMongo, disconnectMongo, dropDatabase } from '../../src/utils/mongoose'
 
-const mockSaveFunc = async () => ({ newLink: false, newPath: true })
 const linksToCall = [
   [
-    [
-      'http://doubletuoxp6ok2lgxvfrukbuo4gon3eb76tonsoa2kdo7njcb7xk7ad.onion',
-      mockSaveFunc
-    ]
+    'http://doubletuoxp6ok2lgxvfrukbuo4gon3eb76tonsoa2kdo7njcb7xk7ad.onion',
   ],
   undefined,
   undefined,
   [
-    [
-      'http://invest3y4iyeyghux5aubqevj6wqkfzwgg37aifhxx7fp7k7so4hinad.onion',
-      mockSaveFunc
-    ]
+    'http://invest3y4iyeyghux5aubqevj6wqkfzwgg37aifhxx7fp7k7so4hinad.onion',
   ]
-] as (IDarkSearchResponseTuple[] | undefined)[]
+] as Maybe<string[]>[]
 
 describe('Infiltrator test suite', () => {
   before(async () => {
@@ -80,7 +73,13 @@ describe('Infiltrator test suite', () => {
 
     const links = infil.baseLinks
     assert(links.length === 2)
+  })
 
+  it('Should call the runSingleIteration method', async () => {
+    const infil = new Infiltrator()
+    await infil.setup()
+
+    const links = await infil.runSingleIteration()
     console.log(links)
   })
 
