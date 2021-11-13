@@ -1,6 +1,19 @@
 import ErrorStack from './errorstack'
 import Logger from './logger'
 
+export function getDomainAndPath(link: string): {
+  domain: string
+  path: string
+} {
+  const { protocol, hostname, pathname, search } =
+    new URL(link)
+
+    return {
+      domain: protocol + '//' + hostname,
+      path: pathname + search
+    }
+}
+
 export function waitFactory<T extends Function>(
   callback: T,
   howLong: number
@@ -20,7 +33,7 @@ export class HandleError {
   }
 }
 
-export type Maybe<T> = T | undefined
+export type Maybe<T> = T | undefined | null
 
 export function panic<E>(exitCode: number, ...e: E[]): never {
   Logger.error(...e)
