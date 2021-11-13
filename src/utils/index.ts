@@ -1,6 +1,10 @@
 import ErrorStack from './errorstack'
 import Logger from './logger'
 
+export function isURL(param: string): boolean {
+  return /(http:\/\/)|(https:\/\/)/g.test(param)
+}
+
 export function getDomainAndPath(link: string): {
   domain: string
   path: string
