@@ -39,9 +39,18 @@ describe('Infiltrator test suite', () => {
   it('Should call the saveDarkLink method', async () => {
     const infil = new Infiltrator()
 
-    const { newLink, newPath } = await infil.saveDarkLink('http://doubletuoxp6ok2lgxvfrukbuo4gon3eb76tonsoa2kdo7njcb7xk7ad.onion/path_2')
-    assert.isFalse(newLink)
-    assert.isTrue(newPath)
+    const res = await infil.saveDarkLink('http://doubletuoxp6ok2lgxvfrukbuo4gon3eb76tonsoa2kdo7njcb7xk7ad.onion/path_2')
+
+    assert.isFalse(res!.newLink)
+    assert.isTrue(res!.newPath)
+  })
+
+  it('Should call the saveDarkLink method with an invalid url', async () => {
+    const infil = new Infiltrator()
+
+    const res = await infil.saveDarkLink('/signup')
+
+    assert.isUndefined(res)
   })
 
   it('Should call the findLinksInResponseBodies method', async () => {
