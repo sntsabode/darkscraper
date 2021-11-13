@@ -1,7 +1,6 @@
-import { IDarkSearchResponseTuple } from '../darksearch'
-import { fetchDarkLinks, saveDarkLink } from '../models/darklink.model'
+import { fetchDarkLinks, ISaveDarkLinkResult, saveDarkLink, updateDarkLinkPath } from '../models/darklink.model'
 import Requester, { IGetOnionResponse } from '../requester'
-import { Maybe } from '../utils'
+import { getDomainAndPath, Maybe } from '../utils'
 import Logger from '../utils/logger'
 import HtmlOperator from './HtmlOperator'
 
@@ -19,6 +18,8 @@ export default class Infiltrator {
     this.#baseLinks = (await fetchDarkLinks(5)).map(
       link => link.domain + link.paths[0]?.path
     )
+
+    Logger.debug<any>('Base links: ', this.#baseLinks)
   }
 
   async runInfiltration(wait = 240000): Promise<void> {
@@ -30,24 +31,47 @@ export default class Infiltrator {
     })
   }
 
-  async runPerpetual(links?: string[]): Promise<void> {
-    if (!links) {
-      links = this.#baseLinks
-    } else {
-      await Promise.all(links.map((link) => this.saveLink(link)))
-    }
+  async runSingleIteration(baseLinks = this.#baseLinks): Promise<string[]> {
+    const links: string[] = []
+    const proms: (() => Promise<void>)[] = []
 
-    const resps: IGetOnionResponse[] = []
-
-    // It's best these calls run sequentially.
-    for (const link of links) {
+    for (const link of baseLinks) {
       const res = await this.callDarkSearchResponseLink(link)
       if (!res) continue
 
-      resps.push(res)
+      proms.push(() => updateDarkLinkPath(
+        getDomainAndPath(link),
+        'crawled',
+        true
+      ))
+
+      links.push(...this.findLinksInResponseBody(res))
     }
 
-    return this.runPerpetual(this.findLinksInResponseBodies(resps))
+    Logger.debug<any>('Successfully crawled: ', baseLinks)
+    Logger.debug<any>('Found', links)
+
+    await Promise.all(proms.map((update) => update()))
+
+    return links
+  }
+
+  #work = true
+  async runPerpetual(): Promise<void> {
+    let links = await this.runSingleIteration()
+
+    while (this.#work) {
+      const [func, res] = await Promise.all([
+        this.throttle(this.runSingleIteration),
+        (() => Promise.all(links.map(
+          link => saveDarkLink(link)
+        )))() as Promise<ISaveDarkLinkResult[]>
+      ])
+
+      Logger.debug<any>('Successfully acquired links, save results: ', res)
+
+      links = await func(links)
+    }
   }
 
   async throttle<T extends Function>(cb: T): Promise<T> {
@@ -56,21 +80,13 @@ export default class Infiltrator {
     })
   }
 
-  async saveLink(link: string) {
-    const {
-      protocol,
-      hostname,
-      pathname,
-      search
-    } = new URL(link)
-
-    const domain = protocol + hostname
-    const path = pathname + search
-
-    return saveDarkLink(domain, {
-      path,
-      title: 'Infiltrator result'
-    })
+  findLinksInResponseBody(res: IGetOnionResponse): string[] {
+    try {
+      return HtmlOperator.getAllLinks(HtmlOperator.parseHtml(res.body))
+    } catch (e: any) {
+      Logger.error('Error retrieving links from response body', e.message)
+      return []
+    }
   }
 
   findLinksInResponseBodies(
@@ -79,20 +95,14 @@ export default class Infiltrator {
     const returnVal: string[] = []
 
     for (const res of resps) {
-      try {
-        returnVal.push(...HtmlOperator.getAllLinks(
-          HtmlOperator.parseHtml(res.body)
-        ))
-      } catch (e: any) {
-        Logger.error('Error retrieving links from response body', e.message)
-      }
+      returnVal.push(...this.findLinksInResponseBody(res))
     }
 
     return returnVal
   }
 
   async callDarkSearchResponseLink(
-    param: IDarkSearchResponseTuple | string
+    param: string
   ): Promise<Maybe<IGetOnionResponse>> {
     const link = typeof param === 'string'
       ? param
@@ -107,7 +117,7 @@ export default class Infiltrator {
   }
 
   async callDarkSearchResponseLinks(
-    res: (IDarkSearchResponseTuple[] | undefined)[]
+    res: Maybe<string[]>[]
   ): Promise<IGetOnionResponse[]> {
     // It's best these calls run sequentially. The function
     // used to call the onion links spawns a child process and
