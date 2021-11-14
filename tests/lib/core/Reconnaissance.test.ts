@@ -3,11 +3,11 @@ yarn run mocha -r ts-node/register tests/core/Reconnaissance.test.ts --timeout 9
 */
 
 import { assert } from 'chai'
-import Reconnaissance from '../../src/core/Reconnaissance'
-import { connectMongo, disconnectMongo, dropDatabase } from '../../src/utils/mongoose'
+import Reconnaissance from '../../../src/lib/core/Reconnaissance'
+import { connectMongo, disconnectMongo, dropDatabase } from '../../../src/lib/utils/mongoose'
 
 describe('Reconnaissance test suite', () => {
-  const recon = new Reconnaissance(['bitcoin', 'ethereum', 'litecoin'])
+  const recon = new Reconnaissance({ guide: 1, 'hacker tutorial': 10 })
 
   before(async () => connectMongo())
 

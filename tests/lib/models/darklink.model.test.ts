@@ -3,8 +3,8 @@ yarn run mocha -r ts-node/register tests/models/darklink.model.test.ts --timeout
 */
 
 import { assert } from 'chai'
-import * as darkLinkModel from '../../src/models/darklink.model'
-import * as mongoUtils from '../../src/utils/mongoose'
+import * as darkLinkModel from '../../../src/lib/models/darklink.model'
+import * as mongoUtils from '../../../src/lib/utils/mongoose'
 
 describe('darklink model test suite', () => {
   before(async () => mongoUtils.connectMongo())

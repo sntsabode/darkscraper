@@ -3,7 +3,7 @@ yarn run mocha -r ts-node/register tests/darksearch/index.test.ts --timeout 9000
 */
 
 import { assert } from 'chai'
-import DarkSearch from '../../src/darksearch'
+import DarkSearch from '../../../src/lib/darksearch'
 
 describe('DarkSearch test suite', () => {
   it('Should call the search method', async () => {

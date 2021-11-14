@@ -3,10 +3,10 @@ yarn run mocha -r ts-node/register tests/core/Infiltrator.test.ts --timeout 9000
 */
 
 import { assert } from 'chai'
-import Infiltrator from '../../src/core/Infiltrator'
-import { saveDarkLink } from '../../src/models/darklink.model'
-import { Maybe } from '../../src/utils'
-import { connectMongo, disconnectMongo, dropDatabase } from '../../src/utils/mongoose'
+import Infiltrator from '../../../src/lib/core/Infiltrator'
+import { saveDarkLink } from '../../../src/lib/models/darklink.model'
+import { Maybe } from '../../../src/lib/utils'
+import { connectMongo, disconnectMongo, dropDatabase } from '../../../src/lib/utils/mongoose'
 
 const linksToCall = [
   [

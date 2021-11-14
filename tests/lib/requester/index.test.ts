@@ -3,7 +3,7 @@ yarn run mocha -r ts-node/register tests/requester/index.test.ts --timeout 90000
 */
 
 import { assert } from 'chai'
-import Requester from '../../src/requester'
+import Requester from '../../../src/lib/requester'
 
 describe('Requester instance test suite', () => {
   it('Should call the darkSearch Method', async () => {

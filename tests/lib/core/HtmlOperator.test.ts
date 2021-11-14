@@ -3,7 +3,7 @@ yarn run mocha -r ts-node/register tests/core/HtmlOperator.test.ts --timeout 900
 */
 
 import { assert } from 'chai'
-import HtmlOperator from '../../src/core/HtmlOperator'
+import HtmlOperator from '../../../src/lib/core/HtmlOperator'
 
 const htmlLinks = [
   'http://nowhere.com/hello',
