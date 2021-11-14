@@ -1,7 +1,9 @@
-import { parentPort } from 'worker_threads'
+import { parentPort, workerData as coreConfiguration } from 'worker_threads'
 import crawler from '../../lib'
 
-crawler().then(
+console.log('Workder data', coreConfiguration)
+
+crawler(coreConfiguration).then(
   () => parentPort?.postMessage({ success: true }),
   error => parentPort?.postMessage({ error })
 )
