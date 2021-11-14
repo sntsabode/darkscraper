@@ -2,6 +2,7 @@ import inquirer from 'inquirer'
 import ms from './mothership'
 import argv from './argv'
 import colors from '../lib/utils/colors'
+import { IBaseQueries } from '../lib/core/Reconnaissance'
 
 export default async function cli() {
   console.log(`\n${Title}\n`)
@@ -23,6 +24,14 @@ async function processArgs() {
     }
 
     args.purge = confirmPurge
+
+    return args
+  }
+
+  if (args.yes) {
+    getDefaultArgs(args)
+
+    return args
   }
 
   if (!args.server && !args.crawler) {
@@ -32,12 +41,44 @@ async function processArgs() {
     args.server = answers.server
   }
 
+  if (args.queries) {
+    const baseQueries = await askForBaseQueriesBeginPages(args.queries)
+    console.log(baseQueries)
+  }
+
   return args
+}
+
+function getDefaultArgs(argv: argv) {
+  if (!argv.crawler && !argv.server) {
+    argv.crawler = true
+  }
 }
 
 interface IInquirerQuestions {
   crawlerServerArgs: [string, string]
   purgeConfirmation: boolean
+  baseQueryPageNumber: number
+}
+
+async function askForBaseQueriesBeginPages(
+  queries: string[]
+): Promise<IBaseQueries> {
+  const obj: IBaseQueries = { }
+
+  for (const query of queries) {
+    obj[query] = (await inquirer.prompt<IInquirerQuestions>([
+      {
+        name: 'baseQueryPageNumber',
+        type: 'number',
+        message: `Please enter the page you would like the searches for ${colors.cyan(query)[0]} to begin from.`
+      }
+    ])).baseQueryPageNumber
+  }
+
+  console.log(obj)
+
+  return obj
 }
 
 async function askForPurgeConfirmation() {
