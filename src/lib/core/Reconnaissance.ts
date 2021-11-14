@@ -3,19 +3,23 @@ import { ISaveDarkLinkResult, saveDarkLink } from '../models/darklink.model'
 import { Maybe, waitFactory } from '../utils'
 import Logger from '../utils/logger'
 
+export interface IBaseQueries {
+  [query: string]: number
+}
+
 export default class Reconnaissance {
-  #DarkSearches: DarkSearch[]
-  #throttle: () => Promise<() => Promise<void>>
+  #DarkSearches: DarkSearch[] = []
+  #throttle: number
 
   constructor(
-    baseQueries: string[],
+    baseQueries: IBaseQueries,
     throttle: number = 10000
   ) {
-    this.#DarkSearches = baseQueries.map(
-      bq => new DarkSearch(bq)
-    )
+    for (const [query, page] of Object.entries(baseQueries)) {
+      this.#DarkSearches.push(new DarkSearch(query, page))
+    }
 
-    this.#throttle = waitFactory(this.runSingleIteration, throttle)
+    this.#throttle = throttle
   }
 
   #WORK = true
@@ -26,10 +30,11 @@ export default class Reconnaissance {
   }
 
   private work = async () => {
-    console.time('_')
-    const func = await this.#throttle()
-    console.log('Throttle: ')
-    console.timeEnd('_')
+    const func = await waitFactory(
+      this.runSingleIteration,
+      this.#throttle
+    )()
+
     return func()
   }
 
