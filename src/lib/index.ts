@@ -1,10 +1,8 @@
-import Core from './core'
+import Core, { ICoreConfiguration } from './core'
 import Logger from './utils/logger'
 
-const baseQueries = ['guide', 'hacker tutorial',]
-
-export default async function crawler() {
-  const core = new Core(baseQueries)
+export default async function crawler(coreConfig: ICoreConfiguration) {
+  const core = new Core(coreConfig)
 
   await core.setup('debug')
 
@@ -12,3 +10,4 @@ export default async function crawler() {
 
   return core.runPerpetual()
 }
+
