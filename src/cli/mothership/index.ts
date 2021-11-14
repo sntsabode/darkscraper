@@ -1,17 +1,18 @@
-import { readFileSync, writeFileSync } from 'fs'
 import argv from '../argv'
 import { bootThread } from '../threads/manager'
 import crawler from '../../lib'
 import Logger from '../../lib/utils/logger'
 import colors from '../../lib/utils/colors'
 import { connectMongo, disconnectMongo, dropDatabase } from '../../lib/utils/mongoose'
+import { ICoreConfiguration } from '../../lib/core'
 
-export default async function mothership(argv: argv) {
+export default async function mothership(
+  argv: argv,
+  coreConfiguration: ICoreConfiguration
+) {
   if (argv.purge) {
     await purgeDatabase()
   }
-
-  let coreConfiguration = fetchCoreConfiguration()
 
   if (argv.crawler && argv.server) {
     const processes: (() => Promise<any>)[] = []
@@ -27,20 +28,6 @@ export default async function mothership(argv: argv) {
   }
 
   return
-}
-
-function fetchCoreConfiguration() {
-  const configPath = '/usr/darkscraper/core_config.json'
-
-  try {
-    return JSON.parse(readFileSync(configPath).toString())
-  } catch (e: any) {
-    if (e.code !== 'ENOENT') {
-      throw e
-    }
-
-    writeFileSync(configPath, JSON.stringify({}))
-  }
 }
 
 async function purgeDatabase() {
