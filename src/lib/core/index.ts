@@ -3,21 +3,30 @@ import ErrorStack from '../utils/errorstack'
 import Logger, { getLogLevel, LogLevels } from '../utils/logger'
 import { connectMongo } from '../utils/mongoose'
 import Infiltrator from './Infiltrator'
-import Reconnaissance from './Reconnaissance'
+import Reconnaissance, { IBaseQueries } from './Reconnaissance'
+
+export interface ICoreConfiguration {
+  baseQueries: IBaseQueries
+  panicTrigger: number
+  reconThrottle: number
+  infilThrottle: number
+  infilWaitBeforeRunTime?: number
+}
 
 export default class Core extends HandleError {
   #Recon: Reconnaissance
   #Infil: Infiltrator
 
-  constructor(
-    baseQueries: string[],
-    panicTrigger = 10,
-    reconThrottle = 1000
-  ) {
+  constructor({
+    baseQueries,
+    reconThrottle,
+    panicTrigger,
+    infilThrottle
+  }: ICoreConfiguration) {
     super()
 
     this.#Recon = new Reconnaissance(baseQueries, reconThrottle)
-    this.#Infil = new Infiltrator()
+    this.#Infil = new Infiltrator(infilThrottle)
     ErrorStack.panicTrigger = panicTrigger
   }
 
@@ -26,10 +35,6 @@ export default class Core extends HandleError {
 
     await connectMongo()
     await this.#Infil.setup()
-  }
-
-  async main() {
-
   }
 
   async runPerpetual() {
