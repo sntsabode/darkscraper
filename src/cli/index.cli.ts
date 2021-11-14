@@ -2,14 +2,16 @@ import inquirer from 'inquirer'
 import ms from './mothership'
 import argv from './argv'
 import colors from '../lib/utils/colors'
-import { IBaseQueries } from '../lib/core/Reconnaissance'
+import { ICoreConfiguration } from '../lib/core'
+import configureMenu, { askForBaseQueriesBeginPages, fetchOrAskForCoreConfig } from './config'
 
 export default async function cli() {
   console.log(`\n${Title}\n`)
 
   const argv = await processArgs()
+  const coreConfig = await fetchOrAskForCoreConfig()
 
-  return ms(argv)
+  return ms(argv, coreConfig)
 }
 
 async function processArgs() {
@@ -26,6 +28,10 @@ async function processArgs() {
     args.purge = confirmPurge
 
     return args
+  }
+
+  if (args.configure) {
+    await configureMenu()
   }
 
   if (args.yes) {
@@ -59,26 +65,7 @@ interface IInquirerQuestions {
   crawlerServerArgs: [string, string]
   purgeConfirmation: boolean
   baseQueryPageNumber: number
-}
-
-async function askForBaseQueriesBeginPages(
-  queries: string[]
-): Promise<IBaseQueries> {
-  const obj: IBaseQueries = { }
-
-  for (const query of queries) {
-    obj[query] = (await inquirer.prompt<IInquirerQuestions>([
-      {
-        name: 'baseQueryPageNumber',
-        type: 'number',
-        message: `Please enter the page you would like the searches for ${colors.cyan(query)[0]} to begin from.`
-      }
-    ])).baseQueryPageNumber
-  }
-
-  console.log(obj)
-
-  return obj
+  coreConfig: ICoreConfiguration
 }
 
 async function askForPurgeConfirmation() {
