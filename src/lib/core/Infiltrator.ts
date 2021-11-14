@@ -7,11 +7,16 @@ import HtmlOperator from './HtmlOperator'
 export default class Infiltrator {
   #throttle: number
   #baseLinks: string[] = []
+  #waitBeforeRunTime: number
 
   get baseLinks(): string[] { return this.#baseLinks }
 
-  constructor(throttle = 120000) {
+  constructor(
+    throttle = 120000,
+    waitBeforeRunTime = 120000
+  ) {
     this.#throttle = throttle
+    this.#waitBeforeRunTime = waitBeforeRunTime
   }
 
   async setup() {
@@ -22,13 +27,28 @@ export default class Infiltrator {
     Logger.debug<any>('Base links: ', this.#baseLinks)
   }
 
-  async runInfiltration(wait = 240000): Promise<void> {
+  async runInfiltration(): Promise<void> {
     return new Promise((resolve) => {
-      setTimeout(async () => {
-        await this.runPerpetual()
-        resolve()
-      }, wait)
+      setTimeout(async () => this.runPerpetual().then(
+        () => resolve()
+      ), this.#waitBeforeRunTime)
     })
+  }
+
+  #work = true
+  async runPerpetual(): Promise<void> {
+    let links = await this.runSingleIteration()
+
+    while (this.#work) {
+      const [func, res] = await Promise.all([
+        this.throttle(this.runSingleIteration),
+        this.saveDarkLinks(links)
+      ])
+
+      Logger.debug<any>('Successfully acquired links, save results: ', res)
+
+      links = await func(links)
+    }
   }
 
   async runSingleIteration(baseLinks = this.#baseLinks): Promise<string[]> {
@@ -54,22 +74,6 @@ export default class Infiltrator {
     await Promise.all(proms.map((update) => update()))
 
     return links
-  }
-
-  #work = true
-  async runPerpetual(): Promise<void> {
-    let links = await this.runSingleIteration()
-
-    while (this.#work) {
-      const [func, res] = await Promise.all([
-        this.throttle(this.runSingleIteration),
-        this.saveDarkLinks(links)
-      ])
-
-      Logger.debug<any>('Successfully acquired links, save results: ', res)
-
-      links = await func(links)
-    }
   }
 
   async saveDarkLinks(links: string[]): Promise<Maybe<ISaveDarkLinkResult>[]> {
