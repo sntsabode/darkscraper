@@ -60,13 +60,17 @@ export default class Logger {
   static error = <T>(...args: T[]) =>
     this.#log(LogLevel.error, this.#errorTag, ...args)
 
+  static #successTag = colors.green(tag)[0]!
+  static success = <T>(...args: T[]) => {
+    this.#log(LogLevel.error, this.#successTag, ...args)
+  }
+
   static readonly #log = <T>(
     level: LogLevel,
     tag: string,
     ...args: T[]
   ): void => {
     this.#_log(level, tag, ...args)
-    this.#_log(level, '')
   }
 
   static readonly #_log = <T>(
@@ -77,7 +81,7 @@ export default class Logger {
     if (this.#logLevel > level)
       return
 
-    console.log(tag, ...args)
+    console.log(tag, ...args, '\n')
   }
 
   static readonly #groupLog = <T>(
