@@ -1,4 +1,5 @@
 import yargs from 'yargs'
+import colors from '../lib/utils/colors'
 import { LogLevel } from '../lib/utils/logger'
 
 interface argv {
@@ -6,6 +7,8 @@ interface argv {
   server?: boolean
   purge?: boolean
   loglevel: LogLevel
+  yes?: boolean
+  queries: string[]
 }
 
 const argv_ = yargs
@@ -30,6 +33,16 @@ const argv_ = yargs
     choices: ['d', 'i', 'w', 'e', 'o'],
     describe: 'Set the process\' log level. Applies to both the server and the crawler instance.'
   })
+  .option('queries', {
+    alias: 'q',
+    type: 'array',
+    describe: 'Queries going to the sent to the darksearch api during reconnaissance.'
+  })
+  .option('yes', {
+    alias: 'y',
+    type: 'boolean',
+    describe: `Run the process without asking any questions. (Will still ask on ${colors.red('--purge')[0]}).`
+  })
   .help().argv
 
 async function argv(): Promise<argv> {
@@ -38,7 +51,7 @@ async function argv(): Promise<argv> {
   return {
     ...args,
     loglevel: getLoglevel(args.loglevel)
-  }
+  } as argv
 }
 
 export function getLoglevel(arg?: string): LogLevel {
