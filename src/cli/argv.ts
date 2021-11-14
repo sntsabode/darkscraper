@@ -6,6 +6,7 @@ interface argv {
   crawler?: boolean
   server?: boolean
   purge?: boolean
+  configure?: boolean
   loglevel: LogLevel
   yes?: boolean
   queries: string[]
@@ -26,6 +27,11 @@ const argv_ = yargs
     alias: 'p',
     type: 'boolean',
     describe: 'Purge your local dark link database.'
+  })
+  .option('configure', {
+    alias: 'k',
+    type: 'boolean',
+    describe: 'Open a darkcrawler configure prompt menu.'
   })
   .option('loglevel', {
     alias: 'l',
