@@ -81,7 +81,7 @@ export default class Logger {
     if (this.#logLevel > level)
       return
 
-    console.log(tag, ...args, '\n')
+    console.log(tag, ...args)
   }
 
   static readonly #groupLog = <T>(
@@ -89,6 +89,8 @@ export default class Logger {
     tag: string,
     ...args: T[]
   ) => {
+    this.#_log(level, '')
+
     args.forEach((arg) =>
       this.#_log(level, tag, arg)
     )
