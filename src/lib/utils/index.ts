@@ -1,6 +1,14 @@
 import ErrorStack from './errorstack'
 import Logger from './logger'
 
+export function isObjectEmpty<T extends Object>(obj: T = { } as T): boolean {
+  for (const [] of Object.entries(obj)) {
+    return false
+  }
+
+  return true
+}
+
 export function isURL(param: string): boolean {
   return /(http:\/\/)|(https:\/\/)/g.test(param)
 }
