@@ -130,6 +130,8 @@ export default class Infiltrator {
   callDarkSearchResponseLink = async (
     link: string
   ): Promise<Maybe<IGetOnionResponse>> => {
+    if (!isURL(link)) { return undefined }
+
     const res = await Requester.getOnion(link)
     const status = (res.headers ?? { }).status
 
