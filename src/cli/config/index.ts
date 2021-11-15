@@ -75,7 +75,7 @@ async function confirmPrompt(msg: string) {
       type: 'confirm',
       message: msg
     }
-  ]).catch(e => {console.log(e); return { confirm: true }})
+  ])
 
   return confirm
 }
