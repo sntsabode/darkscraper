@@ -6,7 +6,11 @@ import colors from '../../lib/utils/colors'
 import Logger from '../../lib/utils/logger'
 
 export function fetchCoreConfigFile(): Maybe<ICoreConfiguration> {
-  return JSON.parse(readFileSync(coreConfigPath).toString())
+  try {
+    return JSON.parse(readFileSync(coreConfigPath).toString())
+  } catch (e) {
+    return { } as ICoreConfiguration
+  }
 }
 
 export function saveCoreConfigFile(config: ICoreConfiguration): void {
