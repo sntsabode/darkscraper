@@ -1,6 +1,6 @@
 import { HandleError } from '../utils'
 import ErrorStack from '../utils/errorstack'
-import Logger, { getLogLevel, LogLevels } from '../utils/logger'
+import Logger, { LogLevel } from '../utils/logger'
 import { connectMongo } from '../utils/mongoose'
 import Infiltrator from './Infiltrator'
 import Reconnaissance, { IBaseQueries } from './Reconnaissance'
@@ -30,8 +30,8 @@ export default class Core extends HandleError {
     ErrorStack.panicTrigger = panicTrigger
   }
 
-  async setup(ll: LogLevels): Promise<void> {
-    Logger.logLevel = getLogLevel(ll)
+  async setup(ll: LogLevel): Promise<void> {
+    Logger.logLevel = ll
 
     await connectMongo()
     await this.#Infil.setup()
