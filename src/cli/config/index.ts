@@ -5,6 +5,7 @@ import { ICoreConfiguration } from '../../lib/core'
 import { IBaseQueries } from '../../lib/core/Reconnaissance'
 import colors from '../../lib/utils/colors'
 import Logger from '../../lib/utils/logger'
+import { prompt } from '../utils'
 import { fetchCoreConfigFile, saveCoreConfigFile, validateCoreConfig } from './core.config'
 
 export const configDir = `${require('os').homedir()}/darkscraper`
@@ -13,6 +14,7 @@ export const coreConfigPath = `${configDir}/core_config.json`
 export type IConfigOption =
   | 'purge'
   | 'crawler'
+  | 'queries'
   | 'log'
   | 'exit'
 
@@ -27,9 +29,72 @@ export default async function configureMenu() {
       await purgeOption()
     } else if (option === 'crawler') {
       await crawlerOption()
+    } else if (option === 'queries') {
+      await queriesOption()
     } else if (option === 'log') {
       await logOption()
     } else if (option === 'exit') {
+      work = false
+    }
+  }
+}
+
+async function queriesOption() {
+  const coreConfig = fetchCoreConfigFile()
+  if (!coreConfig) {
+    Logger.error('No crawler configuraion was found')
+    Logger.error('Run the crawler command to configure your crawler instance.')
+
+    return
+  }
+
+  Logger.info(...colors.cyan('queries'), 'selected. You can run the following commands:')
+  console.log(tab, 'add', tab, '-- Add a new query to the base queries object')
+  for (const [query] of Object.entries(coreConfig.baseQueries)) {
+    console.log(tab, ...colors.cyan(query), tab, '-- Configure your', query, 'query')
+  }
+  console.log(tab, ...colors.green('exit') , '|', ...colors.green('..'), tab, '-- Exit the queries input loop')
+
+  let work = true
+
+  while (work) {
+    const option = await ask('darkscraper::configure::queries>')
+    if (option === 'add') {
+      const query = await prompt('input', 'Enter the query')
+      const page = await prompt('number', `Please enter the page you would like the searches for ${colors.cyan(query)[0]} to begin from`)
+      coreConfig.baseQueries[query] = page
+    } else if (coreConfig.baseQueries.hasOwnProperty(option)) {
+      await queriesOptionWorker(coreConfig.baseQueries, option)
+    } else if (option === 'exit' || option === '..') {
+      work = false
+    }
+  }
+
+  saveCoreConfigFile(coreConfig)
+}
+
+async function queriesOptionWorker(baseQueries: IBaseQueries, query: string) {
+  Logger.info(...colors.cyan(query), 'selected. You can run the following commands:')
+  console.log(tab, ...colors.red('delete'), tab, '-- Delete the query')
+  console.log(tab, 'page', tab, '-- Configure the searches page number (where the Reconnaissance begins its calls for', `${query})`)
+  console.log(tab, ...colors.green('exit'), '|', ...colors.green('..'), tab, '-- Exit the queries input loop')
+
+  const log = `darkscraper::configure::queries::${query}>`
+  let work = true
+
+  while (work) {
+    const option = await ask(log)
+    if (option === 'page') {
+      const page = await prompt('number', 'Enter the page number')
+      baseQueries[query] = page
+      work = false
+    } else if (option === 'delete') {
+      const confirm = await prompt('confirm', `Are you sure you want to delete the ${colors.cyan(query)} query?`)
+      if (!confirm) { continue }
+
+      delete baseQueries[query]
+      work = false
+    } else if (option === 'exit' || option === '..') {
       work = false
     }
   }
@@ -39,7 +104,7 @@ async function purgeOption() {
   Logger.info(...colors.red('purge'), 'selected. You can run the following commands:')
   console.log(tab, ...colors.red('crawler'), tab, '-- Delete your', ...colors.cyan('crawler configuration'))
   console.log(tab, ...colors.red('server'), tab, '-- Delete your', ...colors.cyan('server configuration'))
-  console.log(tab, ...colors.green('exit'), tab, '-- Exit the purge input loop')
+  console.log(tab, ...colors.green('exit'), '|', ...colors.green('..'), tab, '-- Exit the purge input loop')
 
   const log = `darkscraper::configure::${colors.red('purge')[0]}>`
   let work = true
@@ -52,7 +117,7 @@ async function purgeOption() {
     } else if (option === 'server') {
       await purgeOptionWorker('', option)
       work = false
-    } else if (option === 'exit') {
+    } else if (option === 'exit' || option === '..') {
       work = false
     } else {
       Logger.error('Entered an invalid option')
@@ -62,22 +127,10 @@ async function purgeOption() {
 }
 
 async function purgeOptionWorker(pathToConfigFile: string, option: string) {
-  const confirmation = await confirmPrompt(`Are you sure you want to purge your ${colors.red(option)[0]} configuration`)
+  const confirmation = await prompt('confirm', `Are you sure you want to purge your ${colors.red(option)[0]} configuration`)
   if (!confirmation) { return }
 
   deleteAndLogENOENT(pathToConfigFile, option)
-}
-
-async function confirmPrompt(msg: string) {
-  const { confirm } = await inquirer.prompt<{ confirm: boolean }>([
-    {
-      name: 'confirm',
-      type: 'confirm',
-      message: msg
-    }
-  ])
-
-  return confirm
 }
 
 async function crawlerOption() {
@@ -91,7 +144,7 @@ async function logOption() {
   Logger.info(...colors.cyan('log'), 'selected. You can run the following commands:')
   console.log(tab, 'crawler', tab, '-- Log your', ...colors.cyan('crawler configuration'))
   console.log(tab, 'server', tab, '-- Loge your', ...colors.cyan('server configuration'))
-  console.log(tab, ...colors.green('exit'), tab, '-- Exit the log input loop')
+  console.log(tab, ...colors.green('exit'), '|', ...colors.green('..'), tab, '-- Exit the log input loop')
 
   let work = true
 
@@ -102,7 +155,7 @@ async function logOption() {
       work = false
     } else if (option === 'server') {
       work = false
-    } else if (option === 'exit') {
+    } else if (option === 'exit' || option === '..') {
       work = false
     } else {
       Logger.error('Entered an invalid option')
@@ -127,7 +180,7 @@ function logCoreConfigFile() {
       console.log(`${tab}${tab}`, 'Page:', page, '\n')
     }
   } else {
-    console.log(tab, 'Base queries:', undefined, '\n')
+    console.log(tab, 'Base queries:', ...colors.white(undefined), '\n')
   }
 }
 
@@ -202,13 +255,7 @@ export async function askForBaseQueriesBeginPages(
   const obj: IBaseQueries = { }
 
   for (const query of queries) {
-    obj[query] = (await inquirer.prompt<{ num: number }>([
-      {
-        name: 'num',
-        type: 'number',
-        message: `Please enter the page you would like the searches for ${colors.cyan(query)[0]} to begin from.`
-      }
-    ])).num
+    obj[query] = await prompt('number', `Please enter the page you would like the searches for ${colors.cyan(query)[0]} to begin from.`)
   }
 
   return obj
@@ -230,6 +277,7 @@ function logIntro() {
   Logger.info('You have entered the', ...colors.cyan('configure menu'), 'You can run the following commands:')
   console.log(`${tab}${colors.red('purge')[0]} ${tab} -- Delete configuration files`)
   console.log(`${tab}crawler ${tab} -- Configure your crawler instance`)
+  console.log(`${tab}queries ${tab} -- Configure your base queries`)
   console.log(`${tab}log ${tab} -- Log your configuration files`)
   console.log(`${tab}${colors.green('exit')[0]} ${tab} -- Exit the configure menu`)
 
