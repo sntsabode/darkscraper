@@ -8,7 +8,7 @@ import { isObjectEmpty } from '../../lib/utils'
 import colors from '../../lib/utils/colors'
 import Logger from '../../lib/utils/logger'
 import { prompt } from '../utils'
-import { fetchCoreConfigFile, saveCoreConfigFile, validateCoreConfig } from './core.config'
+import { constructNewBaseQueriesObject, fetchCoreConfigFile, saveCoreConfigFile, validateCoreConfig } from './core.config'
 
 export type IConfigOption =
   | 'purge'
@@ -71,7 +71,7 @@ async function queriesOption() {
     }
   }
 
-  await saveCoreConfigFile(coreConfig, true)
+  await saveCoreConfigFile(coreConfig, true, true)
 }
 
 async function queriesOptionWorker(baseQueries: IBaseQueries, query: string) {
@@ -213,26 +213,32 @@ export async function fetchOrAskForCoreConfig() {
 }
 
 export async function askForCoreConfig() {
+  const config = fetchCoreConfigFile()
+
   const val = await inquirer.prompt<ICoreConfiguration>([
     {
       name: 'panicTrigger',
       type: 'number',
-      message: 'Please enter a panic trigger. (Number of errors until a panic is triggered)'
+      message: 'Please enter a panic trigger. (Number of errors until a panic is triggered)',
+      default: config.panicTrigger
     },
     {
       name: 'reconThrottle',
       type: 'number',
-      message: 'Please enter a recon throttle. (How long to wait between each call when running Reconnaissance)'
+      message: 'Please enter a recon throttle. (How long to wait between each call when running Reconnaissance)',
+      default: config.reconThrottle
     },
     {
       name: 'infilThrottle',
       type: 'number',
-      message: 'Please enter an infil throttle. (How long to wait between calls when running the Infiltrator)'
+      message: 'Please enter an infil throttle. (How long to wait between calls when running the Infiltrator)',
+      default: config.infilThrottle
     },
     {
       name: 'infilWaitBeforeRunTime',
       type: 'number',
-      message: 'Please enter an "infil wait before run time". (How long the Infiltrator should wait before running. (Reconnaissance running in the background))'
+      message: 'Please enter an "infil wait before run time". (How long the Infiltrator should wait before running. (Reconnaissance running in the background))',
+      default: config.infilWaitBeforeRunTime
     },
     {
       name: 'baseQueries',
@@ -244,8 +250,11 @@ export async function askForCoreConfig() {
     }
   ])
 
-  val.baseQueries = await askForBaseQueriesBeginPages(
-    val.baseQueries as unknown as string[]
+  val.baseQueries = await constructNewBaseQueriesObject(
+    config.baseQueries,
+    await askForBaseQueriesBeginPages(
+      val.baseQueries as unknown as string[]
+    )
   )
 
   return val
@@ -257,6 +266,7 @@ export async function askForBaseQueriesBeginPages(
   const obj: IBaseQueries = { }
 
   for (const query of queries) {
+    if (query === '') { continue }
     obj[query] = await prompt('number', `Please enter the page you would like the searches for ${colors.cyan(query)[0]} to begin from.`)
   }
 
