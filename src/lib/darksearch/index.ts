@@ -2,6 +2,10 @@ import Requester, { IDarkSearchResponse } from '../requester'
 import { Maybe } from '../utils'
 import Logger from '../utils/logger'
 
+export interface IDarkSearchHistory {
+  [query: string]: number
+}
+
 export default class DarkSearch {
   constructor(
     private query: string,
@@ -42,4 +46,5 @@ export default class DarkSearch {
   }
 
   get getPage(): number { return this.page }
+  get getQuery(): string { return this.query }
 }
