@@ -6,34 +6,17 @@ import colors from '../../lib/utils/colors'
 import Logger from '../../lib/utils/logger'
 
 export function fetchCoreConfigFile(): Maybe<ICoreConfiguration> {
+  return JSON.parse(readFileSync(coreConfigPath).toString())
+}
+
+export function saveCoreConfigFile(config: ICoreConfiguration): void {
   try {
-    return JSON.parse(readFileSync(coreConfigPath).toString())
+    writeFileSync(coreConfigPath, JSON.stringify(config))
   } catch (e: any) {
-    if (e.code !== 'ENOENT') {
-      throw e
-    }
+    if (e.code !== 'ENOENT') { throw e }
 
-    const defaultConfig = JSON.stringify({
-      baseQueries: { },
-      panicTrigger: 10,
-      reconThrottle: 20000,
-      infilThrottle: 240000
-    })
-
-    try {
-      writeFileSync(coreConfigPath, defaultConfig)
-
-      return undefined
-    } catch (e: any) {
-      if (e.code !== 'ENOENT') {
-        throw e
-      }
-
-      mkdirSync(configDir, { recursive: true })
-      writeFileSync(coreConfigPath, defaultConfig, { })
-
-      return undefined
-    }
+    mkdirSync(configDir, { recursive: true })
+    writeFileSync(coreConfigPath, JSON.stringify(config))
   }
 }
 
