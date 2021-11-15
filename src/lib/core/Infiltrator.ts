@@ -29,12 +29,16 @@ export default class Infiltrator {
 
   async runInfiltration(): Promise<void> {
     return new Promise((resolve) => {
-      setTimeout(async () => this.runPerpetual().then(
-        () => resolve()
-      ), this.#waitBeforeRunTime)
+      setTimeout(async () => {
+        Logger.info(`Running Infiltrator after ${this.#waitBeforeRunTime}ms of waiting.`)
+        return this.runPerpetual().then(
+          () => resolve()
+        )
+      }, this.#waitBeforeRunTime)
     })
   }
 
+  #i = 1
   #work = true
   async runPerpetual(): Promise<void> {
     let links = await this.runSingleIteration()
@@ -45,9 +49,12 @@ export default class Infiltrator {
         this.saveDarkLinks(links)
       ])
 
-      Logger.debug<any>('Successfully acquired links, save results: ', res)
+      Logger.verbose<any>('Successfully acquired links, save results: ', res)
 
       links = await func(links)
+
+      Logger.info(`Infiltrator interation ${this.#i} complete.`)
+      this.#i++
     }
   }
 
@@ -115,6 +122,7 @@ export default class Infiltrator {
       returnVal.push(...this.findLinksInResponseBody(res))
     }
 
+    Logger.info(`Found ${returnVal.length} links during iteration ${this.#i}`)
     return returnVal
   }
 
@@ -127,8 +135,8 @@ export default class Infiltrator {
 
     const res = await Requester.getOnion(link)
 
-    Logger.debug<any>(link, res)
-    Logger.debug(Requester.GETOnionCount)
+    Logger.verbose<any>(link, res)
+    Logger.verbose(Requester.GETOnionCount)
 
     return res
   }
@@ -148,7 +156,10 @@ export default class Infiltrator {
 
       for (const j of i) {
         const resp = await this.callDarkSearchResponseLink(j)
-        if (resp) { returnVal.push(resp) }
+        if (!resp) { continue }
+
+        returnVal.push(resp)
+        Logger.info('Successfully called', j)
       }
     }
 
