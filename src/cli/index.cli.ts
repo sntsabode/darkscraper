@@ -6,7 +6,7 @@ import configureMenu, { askForBaseQueriesBeginPages, fetchOrAskForCoreConfig } f
 import { saveCoreConfigFile } from './config/core.config'
 import { bootThread } from './threads/manager'
 import crawler from '../lib'
-import Logger from '../lib/utils/logger'
+import Logger, { LogLevel } from '../lib/utils/logger'
 import { connectMongo, disconnectMongo, dropDatabase } from '../lib/utils/mongoose'
 
 export default async function cli() {
@@ -27,9 +27,9 @@ async function main(
   }
 
   if (argv.crawler && argv.server) {
-    return runCrawlerAndServerInSeperateThreads(coreConfiguration)
+    return runCrawlerAndServerInSeperateThreads(coreConfiguration, argv.loglevel)
   } else if (argv.crawler) {
-    return crawler(coreConfiguration)
+    return crawler(coreConfiguration, argv.loglevel)
   } else if (argv.server) {
     return
   }
@@ -38,12 +38,13 @@ async function main(
 }
 
 function runCrawlerAndServerInSeperateThreads(
-  coreConfig: ICoreConfiguration
+  coreConfig: ICoreConfiguration,
+  logLevel: LogLevel
 ) {
   const processes: (() => Promise<any>)[] = []
 
   const pathToCrawlerEntryPoint = './dist/cli/threads/crawler.worker'
-  processes.push(() => bootThread(pathToCrawlerEntryPoint, coreConfig))
+  processes.push(() => bootThread(pathToCrawlerEntryPoint, { coreConfig, logLevel }))
 
   return Promise.all(processes.map(process => process()))
 }

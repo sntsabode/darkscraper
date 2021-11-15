@@ -1,10 +1,12 @@
 import Core, { ICoreConfiguration } from './core'
-import Logger from './utils/logger'
+import Logger, { LogLevel } from './utils/logger'
 
-export default async function crawler(coreConfig: ICoreConfiguration) {
+export default async function crawler(
+  coreConfig: ICoreConfiguration,
+  ll: LogLevel
+) {
   const core = new Core(coreConfig)
-
-  await core.setup('debug')
+  await core.setup(ll)
 
   Logger.info('Running crawler')
 
