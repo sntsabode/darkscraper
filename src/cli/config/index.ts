@@ -3,14 +3,12 @@ import inquirer from 'inquirer'
 import { createInterface } from 'readline'
 import { ICoreConfiguration } from '../../lib/core'
 import { IBaseQueries } from '../../lib/core/Reconnaissance'
+import { coreConfigPath } from '../../lib/dirs'
 import { isObjectEmpty } from '../../lib/utils'
 import colors from '../../lib/utils/colors'
 import Logger from '../../lib/utils/logger'
 import { prompt } from '../utils'
 import { fetchCoreConfigFile, saveCoreConfigFile, validateCoreConfig } from './core.config'
-
-export const configDir = `${require('os').homedir()}/darkscraper`
-export const coreConfigPath = `${configDir}/core_config.json`
 
 export type IConfigOption =
   | 'purge'

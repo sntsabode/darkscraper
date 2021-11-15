@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'fs'
-import { configDir, coreConfigPath } from '.'
 import { ICoreConfiguration } from '../../lib/core'
 import { IBaseQueries } from '../../lib/core/Reconnaissance'
+import { configDir, coreConfigPath } from '../../lib/dirs'
 import { isObjectEmpty } from '../../lib/utils'
 import colors from '../../lib/utils/colors'
 import Logger from '../../lib/utils/logger'
