@@ -1,9 +1,13 @@
 import inquirer from 'inquirer'
-import ms from './mothership'
 import argv from './argv'
 import colors from '../lib/utils/colors'
 import { ICoreConfiguration } from '../lib/core'
 import configureMenu, { askForBaseQueriesBeginPages, fetchOrAskForCoreConfig } from './config'
+import { saveCoreConfigFile } from './config/core.config'
+import { bootThread } from './threads/manager'
+import crawler from '../lib'
+import Logger from '../lib/utils/logger'
+import { connectMongo, disconnectMongo, dropDatabase } from '../lib/utils/mongoose'
 
 export default async function cli() {
   console.log(`\n${Title}\n`)
@@ -11,7 +15,62 @@ export default async function cli() {
   const argv = await processArgs()
   const coreConfig = await fetchOrAskForCoreConfig()
 
-  return ms(argv, coreConfig)
+  return main(argv, coreConfig)
+}
+
+async function main(
+  argv: argv,
+  coreConfiguration: ICoreConfiguration
+) {
+  if (argv.purge) {
+    await purgeDatabase()
+  }
+
+  if (argv.crawler && argv.server) {
+    return runCrawlerAndServerInSeperateThreads(coreConfiguration)
+  } else if (argv.crawler) {
+    return crawler(coreConfiguration)
+  } else if (argv.server) {
+    return
+  }
+
+  return
+}
+
+function runCrawlerAndServerInSeperateThreads(
+  coreConfig: ICoreConfiguration
+) {
+  const processes: (() => Promise<any>)[] = []
+
+  const pathToCrawlerEntryPoint = './dist/cli/threads/crawler.worker'
+  processes.push(() => bootThread(pathToCrawlerEntryPoint, coreConfig))
+
+  return Promise.all(processes.map(process => process()))
+}
+
+async function purgeDatabase() {
+  await connectMongo()
+
+  const databaseDropped = await dropDatabase()
+  if (!databaseDropped) {
+    Logger.error('Failed to purge database.')
+    console.log(
+      'If you really wish to purge the database...\n',
+      'Open a mongo shell by entering', ...colors.cyan('mongo'), 'in a terminal.\n',
+      'Once the mongo repl is open enter the following commands in sequence to purge the darkscraper database.\n',
+      '>', ...colors.cyan('show dbs\n'),
+      '>', ...colors.cyan('use darkscraper\n'),
+      '>', ...colors.cyan('db.dropDatabase()\n'),
+      'If no error was thrown, the database was successfully purged.\n',
+      'Run...\n',
+      '>', ...colors.cyan('show dbs\n'),
+      'again to verify the database was purged.\n'
+    )
+  } else {
+    Logger.success('Successfully purged your local dark link database.')
+  }
+
+  return disconnectMongo()
 }
 
 async function processArgs() {
@@ -49,7 +108,7 @@ async function processArgs() {
 
   if (args.queries) {
     const baseQueries = await askForBaseQueriesBeginPages(args.queries)
-    console.log(baseQueries)
+    await saveCoreConfigFile({ baseQueries } as ICoreConfiguration, true)
   }
 
   return args
@@ -90,8 +149,7 @@ async function askForServerCrawlerArgs() {
       name: 'crawlerServerArgs',
       type: 'checkbox',
       message: 'Please check the process(es) you would like to run.',
-      choices: ['Crawler', 'Server'],
-      default: ['Crawler']
+      choices: ['Crawler', 'Server']
     }
   ]).then(
     ({ crawlerServerArgs }) => crawlerServerArgs.map(a => a.toLowerCase()),
