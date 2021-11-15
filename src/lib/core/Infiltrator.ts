@@ -1,6 +1,7 @@
 import { fetchDarkLinks, ISaveDarkLinkResult, saveDarkLink, updateDarkLinkPath } from '../models/darklink.model'
 import Requester, { IGetOnionResponse } from '../requester'
 import { getDomainAndPath, isURL, Maybe } from '../utils'
+import colors from '../utils/colors'
 import Logger from '../utils/logger'
 import HtmlOperator from './HtmlOperator'
 
@@ -19,7 +20,7 @@ export default class Infiltrator {
     this.#waitBeforeRunTime = waitBeforeRunTime
   }
 
-  async setup() {
+  setup = async () => {
     this.#baseLinks = (await fetchDarkLinks(5)).map(
       link => link.domain + link.paths[0]?.path
     )
@@ -27,7 +28,7 @@ export default class Infiltrator {
     Logger.debug<any>('Base links: ', this.#baseLinks)
   }
 
-  async runInfiltration(): Promise<void> {
+  runInfiltration = async (): Promise<void> => {
     return new Promise((resolve) => {
       setTimeout(async () => {
         Logger.info(`Running Infiltrator after ${this.#waitBeforeRunTime}ms of waiting.`)
@@ -40,7 +41,7 @@ export default class Infiltrator {
 
   #i = 1
   #work = true
-  async runPerpetual(): Promise<void> {
+  runPerpetual = async (): Promise<void> => {
     let links = await this.runSingleIteration()
 
     while (this.#work) {
@@ -58,11 +59,11 @@ export default class Infiltrator {
     }
   }
 
-  async runSingleIteration(baseLinks = this.#baseLinks): Promise<string[]> {
+  runSingleIteration = async (baseLinks?: string[]): Promise<string[]> => {
     const links: string[] = []
     const proms: (() => Promise<void>)[] = []
 
-    for (const link of baseLinks) {
+    for (const link of baseLinks ?? this.#baseLinks) {
       const res = await this.callDarkSearchResponseLink(link)
       if (!res) continue
 
@@ -83,13 +84,13 @@ export default class Infiltrator {
     return links
   }
 
-  async saveDarkLinks(links: string[]): Promise<Maybe<ISaveDarkLinkResult>[]> {
+  saveDarkLinks = async (links: string[]): Promise<Maybe<ISaveDarkLinkResult>[]> => {
     return Promise.all(links.map(
       link => this.saveDarkLink(link)
     ))
   }
 
-  async saveDarkLink(link: string): Promise<Maybe<ISaveDarkLinkResult>> {
+  saveDarkLink = async (link: string): Promise<Maybe<ISaveDarkLinkResult>> => {
     const isUrl = isURL(link)
     if (!isUrl) {
       return
@@ -98,13 +99,13 @@ export default class Infiltrator {
     return saveDarkLink(link)
   }
 
-  async throttle<T extends Function>(cb: T): Promise<T> {
+  throttle = async <T extends Function>(cb: T): Promise<T> => {
     return new Promise((resolve) => {
       setTimeout(() => resolve(cb), this.#throttle)
     })
   }
 
-  findLinksInResponseBody(res: IGetOnionResponse): string[] {
+  findLinksInResponseBody = (res: IGetOnionResponse): string[] => {
     try {
       return HtmlOperator.getAllLinks(HtmlOperator.parseHtml(res.body))
     } catch (e: any) {
@@ -113,9 +114,9 @@ export default class Infiltrator {
     }
   }
 
-  findLinksInResponseBodies(
+  findLinksInResponseBodies = (
     resps: IGetOnionResponse[]
-  ): string[] {
+  ): string[] => {
     const returnVal: string[] = []
 
     for (const res of resps) {
@@ -126,14 +127,19 @@ export default class Infiltrator {
     return returnVal
   }
 
-  async callDarkSearchResponseLink(
-    param: string
-  ): Promise<Maybe<IGetOnionResponse>> {
-    const link = typeof param === 'string'
-      ? param
-      : param[0]
-
+  callDarkSearchResponseLink = async (
+    link: string
+  ): Promise<Maybe<IGetOnionResponse>> => {
     const res = await Requester.getOnion(link)
+    const status = (res.headers ?? { }).status
+
+    Logger.info(
+      `Infiltrator call to ${colors.yellow(link)[0]} responded with `
+      + `status: ${status === 200
+          ? colors.green(status)[0]
+          : colors.red(status)[0]
+      }`
+    )
 
     Logger.verbose<any>(link, res)
     Logger.verbose(Requester.GETOnionCount)
@@ -141,9 +147,9 @@ export default class Infiltrator {
     return res
   }
 
-  async callDarkSearchResponseLinks(
+  callDarkSearchResponseLinks = async(
     res: Maybe<string[]>[]
-  ): Promise<IGetOnionResponse[]> {
+  ): Promise<IGetOnionResponse[]> => {
     // It's best these calls run sequentially. The function
     // used to call the onion links spawns a child process and
     // calls the link using "curl". This does not play well
