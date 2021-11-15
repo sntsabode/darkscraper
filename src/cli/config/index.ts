@@ -3,6 +3,7 @@ import inquirer from 'inquirer'
 import { createInterface } from 'readline'
 import { ICoreConfiguration } from '../../lib/core'
 import { IBaseQueries } from '../../lib/core/Reconnaissance'
+import { isObjectEmpty } from '../../lib/utils'
 import colors from '../../lib/utils/colors'
 import Logger from '../../lib/utils/logger'
 import { prompt } from '../utils'
@@ -41,7 +42,7 @@ export default async function configureMenu() {
 
 async function queriesOption() {
   const coreConfig = fetchCoreConfigFile()
-  if (!coreConfig) {
+  if (isObjectEmpty(coreConfig)) {
     Logger.error('No crawler configuraion was found')
     Logger.error('Run the crawler command to configure your crawler instance.')
 
@@ -50,8 +51,10 @@ async function queriesOption() {
 
   Logger.info(...colors.cyan('queries'), 'selected. You can run the following commands:')
   console.log(tab, 'add', tab, '-- Add a new query to the base queries object')
-  for (const [query] of Object.entries(coreConfig.baseQueries)) {
-    console.log(tab, ...colors.cyan(query), tab, '-- Configure your', query, 'query')
+  if (!isObjectEmpty(coreConfig.baseQueries)) {
+    for (const [query] of Object.entries(coreConfig.baseQueries)) {
+      console.log(tab, ...colors.cyan(query), tab, '-- Configure your', query, 'query')
+    }
   }
   console.log(tab, ...colors.green('exit') , '|', ...colors.green('..'), tab, '-- Exit the queries input loop')
 
@@ -70,7 +73,7 @@ async function queriesOption() {
     }
   }
 
-  saveCoreConfigFile(coreConfig)
+  await saveCoreConfigFile(coreConfig, true)
 }
 
 async function queriesOptionWorker(baseQueries: IBaseQueries, query: string) {
@@ -135,9 +138,7 @@ async function purgeOptionWorker(pathToConfigFile: string, option: string) {
 
 async function crawlerOption() {
   const config = await askForCoreConfig()
-  saveCoreConfigFile(config)
-
-  Logger.success('Successfully saved your configuration.')
+  await saveCoreConfigFile(config, true)
 }
 
 async function logOption() {
@@ -187,7 +188,6 @@ function logCoreConfigFile() {
 function deleteAndLogENOENT(path: string, which: string) {
   try {
     unlinkSync(path)
-    Logger.success('Successfully deleted your crawler configuration file.')
   } catch (e: any) {
     if (e.code !== 'ENOENT') { throw e }
 
@@ -196,18 +196,22 @@ function deleteAndLogENOENT(path: string, which: string) {
 }
 
 export async function fetchOrAskForCoreConfig() {
-  const config = fetchCoreConfigFile()
+  let config = fetchCoreConfigFile()
 
-  if (config) {
+  if (!isObjectEmpty(config)) {
     const { validated, reason } = validateCoreConfig(config)
 
-    if (validated) { return config }
-    else { throw new Error(reason) }
+    if (!validated) {
+      throw new Error(reason)
+    }
+
+    return config
   }
 
-  const val = await askForCoreConfig()
+  config = await askForCoreConfig()
+  await saveCoreConfigFile(config, false)
 
-  return val
+  return config
 }
 
 export async function askForCoreConfig() {

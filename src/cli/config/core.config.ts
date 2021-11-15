@@ -1,11 +1,13 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { configDir, coreConfigPath } from '.'
 import { ICoreConfiguration } from '../../lib/core'
-import { Maybe } from '../../lib/utils'
+import { IBaseQueries } from '../../lib/core/Reconnaissance'
+import { isObjectEmpty } from '../../lib/utils'
 import colors from '../../lib/utils/colors'
 import Logger from '../../lib/utils/logger'
+import { prompt } from '../utils'
 
-export function fetchCoreConfigFile(): Maybe<ICoreConfiguration> {
+export function fetchCoreConfigFile(): ICoreConfiguration {
   try {
     return JSON.parse(readFileSync(coreConfigPath).toString())
   } catch (e) {
@@ -13,7 +15,21 @@ export function fetchCoreConfigFile(): Maybe<ICoreConfiguration> {
   }
 }
 
-export function saveCoreConfigFile(config: ICoreConfiguration): void {
+export async function saveCoreConfigFile(
+  newConfig: ICoreConfiguration,
+  askForPrecedence?: boolean
+  ): Promise<void> {
+  const oldConfig = fetchCoreConfigFile()
+
+  const config: ICoreConfiguration = {
+    ...newConfig,
+    baseQueries: await constructNewBaseQueriesObject(
+      oldConfig.baseQueries,
+      newConfig.baseQueries,
+      askForPrecedence
+    )
+  }
+
   try {
     writeFileSync(coreConfigPath, JSON.stringify(config))
   } catch (e: any) {
@@ -24,12 +40,42 @@ export function saveCoreConfigFile(config: ICoreConfiguration): void {
   }
 }
 
+async function constructNewBaseQueriesObject(
+  oldBaseQueries: IBaseQueries = { },
+  newBaseQueries: IBaseQueries,
+  askForPrecedence?: boolean
+): Promise<IBaseQueries> {
+  const queries: IBaseQueries = { ...oldBaseQueries }
+
+  for (const [query, page] of Object.entries(newBaseQueries)) {
+    if (oldBaseQueries.hasOwnProperty(query)) {
+      if (oldBaseQueries[query] === page) { continue }
+
+      const msg = `Base Queries Clash: ${colors.cyan(query)[0]} `
+        + `Current Page: ${colors.yellow(oldBaseQueries[query])[0]} `
+        + `New Page: ${colors.yellow(page)[0]}`
+
+      if (!askForPrecedence) {
+        Logger.error(msg)
+        continue
+      }
+
+      queries[query] = await prompt('number', `${msg}\nPlease enter a page number`)
+      continue
+    }
+
+    queries[query] = page
+  }
+
+  return queries
+}
+
 export function validateCoreConfig(config: ICoreConfiguration): {
   validated: boolean
   reason?: string
 } {
-  const baseQueries = validateBaseQueries(config)
-  if (!baseQueries) {
+  const isBaseQueriesEmpty = isObjectEmpty(config.baseQueries)
+  if (isBaseQueriesEmpty) {
     Logger.error('Core configuration invalid. An empty base queries object was found.')
     Logger.error(`Run the ${colors.cyan('darkscraper')[0]} command with the ${colors.cyan('-q')[0]}` +
     ` flag to configure your base queries.`
@@ -38,12 +84,4 @@ export function validateCoreConfig(config: ICoreConfiguration): {
   }
 
   return { validated: true }
-}
-
-function validateBaseQueries({ baseQueries }: ICoreConfiguration) {
-  let i = 0
-
-  for (const [] of Object.entries(baseQueries)) { i++ }
-
-  return i > 0
 }
