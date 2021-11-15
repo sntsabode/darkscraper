@@ -17,17 +17,18 @@ export function fetchCoreConfigFile(): ICoreConfiguration {
 
 export async function saveCoreConfigFile(
   newConfig: ICoreConfiguration,
-  askForPrecedence?: boolean
-  ): Promise<void> {
-  const oldConfig = fetchCoreConfigFile()
-
-  const config: ICoreConfiguration = {
+  askForPrecedence?: boolean,
+  override?: boolean
+): Promise<void> {
+  const config = {
     ...newConfig,
-    baseQueries: await constructNewBaseQueriesObject(
-      oldConfig.baseQueries,
-      newConfig.baseQueries,
-      askForPrecedence
-    )
+    baseQueries: override
+      ? newConfig.baseQueries
+      : await constructNewBaseQueriesObject(
+        fetchCoreConfigFile().baseQueries,
+        newConfig.baseQueries,
+        askForPrecedence
+      )
   }
 
   try {
@@ -40,7 +41,7 @@ export async function saveCoreConfigFile(
   }
 }
 
-async function constructNewBaseQueriesObject(
+export async function constructNewBaseQueriesObject(
   oldBaseQueries: IBaseQueries = { },
   newBaseQueries: IBaseQueries,
   askForPrecedence?: boolean
