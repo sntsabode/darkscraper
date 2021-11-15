@@ -3,6 +3,7 @@
 import colors from './colors'
 
 export type LogLevels =
+  | 'verbose'
   | 'debug'
   | 'default'
   | 'info'
@@ -11,6 +12,7 @@ export type LogLevels =
   | 'off'
 
 export const enum LogLevel {
+  verbose = 0,
   debug = 1,
   default = 2,
   info = 2,
@@ -21,6 +23,8 @@ export const enum LogLevel {
 
 export function getLogLevel(ll: LogLevels): LogLevel {
   switch (ll) {
+    case 'verbose':
+      return LogLevel.verbose
     case 'debug':
       return LogLevel.debug
     case 'default':
@@ -43,6 +47,10 @@ export default class Logger {
   static #logLevel: LogLevel = LogLevel.default
   static get logLevel(): LogLevel { return this.#logLevel }
   static set logLevel(ll: LogLevel) { this.#logLevel = ll }
+
+  static #verboseTag = colors.white(tag)[0]!
+  static verbose = <T>(...args: T[]) =>
+    this.#log(LogLevel.verbose, this.#verboseTag, ...args)
 
   static #debugTag = colors.magenta(tag)[0]!
   static debug = <T>(...args: T[]) =>
