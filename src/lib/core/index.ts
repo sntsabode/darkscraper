@@ -21,12 +21,13 @@ export default class Core extends HandleError {
     baseQueries,
     reconThrottle,
     panicTrigger,
-    infilThrottle
+    infilThrottle,
+    infilWaitBeforeRunTime
   }: ICoreConfiguration) {
     super()
 
     this.#Recon = new Reconnaissance(baseQueries, reconThrottle)
-    this.#Infil = new Infiltrator(infilThrottle)
+    this.#Infil = new Infiltrator(infilThrottle, infilWaitBeforeRunTime)
     ErrorStack.panicTrigger = panicTrigger
   }
 
