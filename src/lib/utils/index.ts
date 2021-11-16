@@ -9,6 +9,10 @@ export function isObjectEmpty<T extends Object>(obj: T = { } as T): boolean {
   return true
 }
 
+export function isOnionLink(param: string): boolean {
+  return /^(?:https?\:\/\/)?[\w\-\.]+\.onion/.test(param)
+}
+
 export function isURL(param: string): boolean {
   return /(http:\/\/)|(https:\/\/)/g.test(param)
 }
