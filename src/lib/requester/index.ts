@@ -56,7 +56,7 @@ export default class Requester {
   private static GET_ONION_COUNT = 0
   static get GETOnionCount(): number { return this.GET_ONION_COUNT }
 
-  static async getOnion(endpoint: string): Promise<IGetOnionResponse> {
+  static getOnion = async (endpoint: string): Promise<IGetOnionResponse> => {
     return new Promise((resolve, reject) => {
       this.GET_ONION_COUNT++
 
@@ -75,7 +75,15 @@ export default class Requester {
     })
   }
 
-  static darkSearch(query: string, page: number): Promise<IDarkSearchResponse> {
+  private static attemptBodyParse = <T>(body: string[]): string | T => {
+    try {
+      return JSON.parse(body.join(''))
+    } catch (e) {
+      return body.join('')
+    }
+  }
+
+  static darkSearch = async (query: string, page: number): Promise<IDarkSearchResponse> => {
     return new Promise<IDarkSearchResponse>((resolve, reject) => {
       https.get(`https://darksearch.io/api/search?query=${query}&page=${page}`, res => {
         res.setEncoding('utf-8')
@@ -92,10 +100,10 @@ export default class Requester {
     })
   }
 
-  static get<T>(
+  static get = async <T>(
     url: string,
     options: https.RequestOptions = { }
-  ): Promise<IResponse<T>> {
+  ): Promise<IResponse<T>> => {
     return new Promise((resolve, reject) => {
       https.get(url, options as https.RequestOptions, (res) => {
         res.setEncoding('utf-8')
@@ -112,17 +120,9 @@ export default class Requester {
     })
   }
 
-  private static attemptBodyParse<T>(body: string[]): string | T {
-    try {
-      return JSON.parse(body.join(''))
-    } catch (e) {
-      return body.join('')
-    }
+  private static darkSearchDebouncedFactory = () => {
+    return debounce(this.darkSearch, 2000)
   }
 
   static darkSearchDebounced = this.darkSearchDebouncedFactory()
-
-  private static darkSearchDebouncedFactory() {
-    return debounce(this.darkSearch, 2000)
-  }
 }
