@@ -41,6 +41,8 @@ export default class DarkSearch {
 
       this.page++
 
+      if (typeof res.body === 'string') return
+
       return res.body.data.map(data => data.link)
     }
   }
