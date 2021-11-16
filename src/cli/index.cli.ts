@@ -8,6 +8,7 @@ import { bootThread } from './threads/manager'
 import crawler from '../lib'
 import Logger, { LogLevel } from '../lib/utils/logger'
 import { connectMongo, disconnectMongo, dropDatabase } from '../lib/utils/mongoose'
+import server from '../api/server'
 
 export default async function cli() {
   console.log(`\n${Title}\n`)
@@ -27,11 +28,17 @@ async function main(
   }
 
   if (argv.crawler && argv.server) {
-    return runCrawlerAndServerInSeperateThreads(coreConfiguration, argv.loglevel)
+    return runCrawlerAndServerInSeperateThreads(
+      coreConfiguration,
+      argv.loglevel
+    )
   } else if (argv.crawler) {
-    return crawler(coreConfiguration, argv.loglevel)
+    return crawler(
+      coreConfiguration,
+      argv.loglevel
+    )
   } else if (argv.server) {
-    return
+    return server()
   }
 
   return
@@ -43,8 +50,12 @@ function runCrawlerAndServerInSeperateThreads(
 ) {
   const processes: (() => Promise<any>)[] = []
 
-  const pathToCrawlerEntryPoint = './dist/cli/threads/crawler.worker'
+  const workerModsDir = './dist/cli/threads'
+  const pathToCrawlerEntryPoint = `${workerModsDir}/crawler.worker`
+  const pathToServerEntryPoint = `${workerModsDir}/server.worker`
+
   processes.push(() => bootThread(pathToCrawlerEntryPoint, { coreConfig, logLevel }))
+  processes.push(() => bootThread(pathToServerEntryPoint, { logLevel }))
 
   return Promise.all(processes.map(process => process()))
 }
