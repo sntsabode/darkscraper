@@ -21,7 +21,12 @@ export interface IDarkSearchResponseBody {
 
 export interface IDarkSearchResponse {
   status?: number
-  body: IDarkSearchResponseBody
+  body: IDarkSearchResponseBody | string
+}
+
+export interface IResponse<T> {
+  status?: number
+  body: T | string
 }
 
 export interface IHeaders {
@@ -78,10 +83,41 @@ export default class Requester {
         const body: string[] = []
 
         res.on('data', (chunk) => { body.push(chunk) })
-        res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(body.join('')) }))
+        res.on('end', () => resolve({
+          status: res.statusCode,
+          body: this.attemptBodyParse(body)
+        }))
         res.on('error', err => reject(err))
       }).on('error', (err) => reject(err))
     })
+  }
+
+  static get<T>(
+    url: string,
+    options: https.RequestOptions = { }
+  ): Promise<IResponse<T>> {
+    return new Promise((resolve, reject) => {
+      https.get(url, options as https.RequestOptions, (res) => {
+        res.setEncoding('utf-8')
+
+        const body: string[] = []
+
+        res.on('data', (chunk) => body.push(chunk))
+        res.on('error', (err) => reject(err))
+        res.on('end', () => resolve({
+          status: res.statusCode,
+          body: this.attemptBodyParse(body)
+        }))
+      }).on('error', (err) => reject(err))
+    })
+  }
+
+  private static attemptBodyParse<T>(body: string[]): string | T {
+    try {
+      return JSON.parse(body.join(''))
+    } catch (e) {
+      return body.join('')
+    }
   }
 
   static darkSearchDebounced = this.darkSearchDebouncedFactory()
