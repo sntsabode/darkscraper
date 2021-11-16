@@ -1,6 +1,6 @@
 import { fetchDarkLinks, ISaveDarkLinkResult, saveDarkLink, updateDarkLinkPath } from '../models/darklink.model'
 import Requester, { IGetOnionResponse } from '../requester'
-import { getDomainAndPath, isURL, Maybe } from '../utils'
+import { getDomainAndPath, isOnionLink, isURL, Maybe } from '../utils'
 import colors from '../utils/colors'
 import Logger from '../utils/logger'
 import HtmlOperator from './HtmlOperator'
@@ -61,25 +61,24 @@ export default class Infiltrator {
 
   runSingleIteration = async (baseLinks?: string[]): Promise<string[]> => {
     const links: string[] = []
-    const proms: (() => Promise<void>)[] = []
 
     for (const link of baseLinks ?? this.#baseLinks) {
       const res = await this.callDarkSearchResponseLink(link)
       if (!res) continue
 
-      proms.push(() => updateDarkLinkPath(
+      await updateDarkLinkPath(
         getDomainAndPath(link),
         'crawled',
         true
-      ))
+      )
+
+      Logger.debug('Updated', link, 'crawled status to true.')
 
       links.push(...this.findLinksInResponseBody(res))
     }
 
     Logger.debug<any>('Successfully crawled: ', baseLinks)
     Logger.debug<any>('Found', links)
-
-    await Promise.all(proms.map((update) => update()))
 
     return links
   }
@@ -127,10 +126,24 @@ export default class Infiltrator {
     return returnVal
   }
 
+  verifyIsDarkLink = async (link: string): Promise<boolean> => {
+    if (!isURL(link)) { return false }
+    if (isOnionLink(link)) { return true }
+
+    try {
+      const { status } = await Requester.get(link)
+      if (status === 200) { return false }
+      return true
+    } catch (e) {
+      return true
+    }
+  }
+
   callDarkSearchResponseLink = async (
     link: string
   ): Promise<Maybe<IGetOnionResponse>> => {
-    if (!isURL(link)) { return undefined }
+    const isValidDarkLink = await this.verifyIsDarkLink(link)
+    if (!isValidDarkLink) { return undefined }
 
     const res = await Requester.getOnion(link)
     const status = (res.headers ?? { }).status
@@ -149,7 +162,7 @@ export default class Infiltrator {
     return res
   }
 
-  callDarkSearchResponseLinks = async(
+  callDarkSearchResponseLinks = async (
     res: Maybe<string[]>[]
   ): Promise<IGetOnionResponse[]> => {
     // It's best these calls run sequentially. The function
