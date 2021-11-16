@@ -1,6 +1,8 @@
 /*
-yarn run mocha -r ts-node/register tests/core/Infiltrator.test.ts --timeout 900000
+yarn run mocha -r ts-node/register tests/lib/core/Infiltrator.test.ts --timeout 900000
 */
+
+process.env.NODE_ENV = 'test'
 
 import { assert } from 'chai'
 import Infiltrator from '../../../src/lib/core/Infiltrator'
@@ -34,6 +36,27 @@ describe('Infiltrator test suite', () => {
         title: 'Demo Dark Link 2'
       })
     ])
+  })
+
+  it('Should call the verifyIsDarkLink method with a valid onion link', async () => {
+    const infil = new Infiltrator()
+
+    const v = await infil.verifyIsDarkLink('http://darklink.onion')
+    assert.isTrue(v)
+  })
+
+  it('Should call the verifyIsDarkLink method with an invalid url', async () => {
+    const infil = new Infiltrator()
+
+    const v = await infil.verifyIsDarkLink('/signup')
+    assert.isFalse(v)
+  })
+
+  it('Should call the verifyIsDarkLink method with a valid clear net url', async () => {
+    const infil = new Infiltrator()
+
+    const v = await infil.verifyIsDarkLink('https://www.google.co.za')
+    assert.isFalse(v)
   })
 
   it('Should call the saveDarkLink method', async () => {
