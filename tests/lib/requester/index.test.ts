@@ -1,9 +1,11 @@
 /*
-yarn run mocha -r ts-node/register tests/requester/index.test.ts --timeout 900000
+yarn run mocha -r ts-node/register tests/lib/requester/index.test.ts --timeout 900000
 */
 
+process.env.NODE_ENV = 'test'
+
 import { assert } from 'chai'
-import Requester from '../../../src/lib/requester'
+import Requester, { IDarkSearchResponseBody } from '../../../src/lib/requester'
 
 describe('Requester instance test suite', () => {
   it('Should call the darkSearch Method', async () => {
@@ -14,7 +16,7 @@ describe('Requester instance test suite', () => {
 
   it('Should call the getOnion method', async () => {
     const res = await Requester.darkSearch('bitcoin', 1)
-    const links = res.body.data
+    const links = (res.body as IDarkSearchResponseBody).data
 
     let errorCount = 0
 

@@ -1,6 +1,8 @@
 /*
-yarn run mocha -r ts-node/register tests/models/darklink.model.test.ts --timeout 900000
+yarn run mocha -r ts-node/register tests/lib/models/darklink.model.test.ts --timeout 900000
 */
+
+process.env.NODE_ENV = 'test'
 
 import { assert } from 'chai'
 import * as darkLinkModel from '../../../src/lib/models/darklink.model'

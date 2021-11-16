@@ -1,6 +1,8 @@
 /*
-yarn run mocha -r ts-node/register tests/core/HtmlOperator.test.ts --timeout 900000
+yarn run mocha -r ts-node/register tests/lib/core/HtmlOperator.test.ts --timeout 900000
 */
+
+process.env.NODE_ENV = 'test'
 
 import { assert } from 'chai'
 import HtmlOperator from '../../../src/lib/core/HtmlOperator'
