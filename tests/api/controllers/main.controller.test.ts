@@ -15,8 +15,20 @@ describe('main controller test suite', () => {
   before(async () => connectMongo())
 
   it('Should call the "/fetch-dark-links" route', async () => {
-    const res = await server.get('/fetch-dark-links?limit=1')
+    const res = await server.get('/fetch-dark-links?limit=1000')
     expect(res).to.have.status(200)
+
+    expect(res.body).to.have.property('links')
+
+    assert.isArray(res.body.links)
+    assert.isNotEmpty(res.body.links)
+  })
+
+  it('Should call the "/search-dark-links" route', async () => {
+    const res = await server.get('/search-dark-links?search=onion&skip=1&limit=10')
+    expect(res).to.have.status(200)
+
+    expect(res.body).to.have.property('links')
 
     assert.isArray(res.body.links)
     assert.isNotEmpty(res.body.links)
