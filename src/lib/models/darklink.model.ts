@@ -46,6 +46,8 @@ const DarkLinkSchema = new Schema<IDarkLink>({
   ]
 })
 
+DarkLinkSchema.index({ '$**': 'text' })
+
 export interface IDarkLinkModel extends IDarkLink {
   _id: number | string
   __v?: number
@@ -56,6 +58,16 @@ const DarkLinkModel = model('DarkLink', DarkLinkSchema)
 export interface ISaveDarkLinkResult {
   newLink: boolean
   newPath?: boolean
+}
+
+export async function searchDarkLinks(
+  search: string,
+  skip: number,
+  limit: number
+) {
+  return DarkLinkModel.find({ $text: { $search: search } })
+    .skip(skip)
+    .limit(limit)
 }
 
 export async function updateDarkLinkPath<T extends keyof IDarkLinkPath>(
