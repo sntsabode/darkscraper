@@ -19,7 +19,7 @@ describe('darklink model test suite', () => {
       title: 'Demo Dark Link'
     })
 
-    assert(newLink === true)
+    assert.isTrue(newLink)
   })
 
   it('Should call the saveDarkLink function with an existing domain but a new path', async () => {
@@ -30,8 +30,8 @@ describe('darklink model test suite', () => {
       title: 'Demo Dark Link 2'
     })
 
-    assert(newLink === false)
-    assert(newPath === true)
+    assert.isFalse(newLink)
+    assert.isTrue(newPath)
   })
 
   it('Should call the saveDarkLink function with an existing link and existing path', async () => {
@@ -42,8 +42,8 @@ describe('darklink model test suite', () => {
       title: 'Demo Dark Link 2'
     })
 
-    assert(newLink === false)
-    assert(newPath === false)
+    assert.isFalse(newLink)
+    assert.isFalse(newPath)
   })
 
   it('Should call the saved dark links from the database', async () => {
@@ -106,7 +106,7 @@ describe('darklink model test suite', () => {
     await darkLinkModel.updateDarkLinkPath({ domain, path }, 'crawled', true)
 
     const res = await darkLinkModel.fetchDarkLinks()
-    console.log(res)
+    assert.isNotEmpty(res)
   })
 
   after(async () => mongoUtils.dropDatabase()
