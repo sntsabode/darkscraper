@@ -1,0 +1,41 @@
+name: darkscraper-test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [12.x, 14.x, 16.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        mongodb-version: ['4.2', '4.4']
+
+    steps:
+    - name: Git checkout
+      uses: actions/checkout@v2
+
+    - name: Setup tor
+      uses: tor-actions/setup-tor@main
+      with:
+        tor-version: '0.4.5.7' # The Tor version to download (if necessary) and use.
+    - run: tor
+
+    - name: Start MongoDB
+      uses: supercharge/mongodb-github-action@1.7.0
+      with:
+        mongodb-version: ${{ matrix.mongodb-version }}
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - run: yarn install --frozen-lockfile
+    - run: yarn test
