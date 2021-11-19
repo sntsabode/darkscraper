@@ -24,7 +24,7 @@ jobs:
       uses: tor-actions/setup-tor@main
       with:
         tor-version: '0.4.5.7' # The Tor version to download (if necessary) and use.
-    - run: tor
+        daemon: true
 
     - name: Start MongoDB
       uses: supercharge/mongodb-github-action@1.7.0
