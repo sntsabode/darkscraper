@@ -1,4 +1,4 @@
-<tt><h1>Welcome to darkscraper</h1></tt>
+<h1>Welcome to darkscraper</h1>
 <p>
   <img alt="Version" src="https://img.shields.io/badge/version-0.1.0-blue.svg?cacheSeconds=2592000" />
   <a href="#" target="_blank">
@@ -6,24 +6,24 @@
   </a>
 </p>
 
-<tt>Darkscraper, a darkweb web crawler.</tt>
+Darkscraper, a darkweb web crawler.
 
 <img src="assets/screenshot.gif" />
 
-<tt><h2>Prerequisites</h2></tt>
-<tt><em><strong>Use other versions at own risk.</em></strong></tt>
+<h2>Prerequisites</h2>
+<em><strong>Use other versions at own risk.</em></strong>
 
-- <tt>Node >=16.13.0</tt>
+- Node >=16.13.0
 
-- <tt>Npm >=8.1.0</tt>
+- Npm >=8.1.0
 
-- <tt>Yarn >=1.22.17</tt>
+- Yarn >=1.22.17
 
-- <tt>Mongodb >=5.0.4</tt>
+- Mongodb >=5.0.4
 
-- <tt>Tor >=----</tt>
+- Tor >=----
 
-<tt><h2>Install</h2></tt>
+<h2>Install</h2>
 
 ```sh
 git clone https://github.com/sntsabode/darkscraper
@@ -36,34 +36,34 @@ yarn build
 npm i -g
 ```
 
-<tt><h2>Run Tests</h2></tt>
+<h2>Run Tests</h2>
 
 ```sh
 yarn run test
 ```
 
-<tt><h2>Usage</h2></tt>
+<h2>Usage</h2>
 
 ```sh
 darkscraper <options>
 ```
 
-<tt><h3>Options:</h3></tt>
+<h3>Options:</h3>
 
-- <tt>`-c` or `--crawler`: Boot your darkscraper instance.</tt>
+- `-c` or `--crawler`: Boot your darkscraper instance.
 
-> <tt>Running the `-c` flag will boot your darkscraper instance "picking up where it left off". ***It requires a running mongodb instance.***</tt>
+> Running the `-c` flag will boot your darkscraper instance "picking up where it left off". ***It requires a running mongodb instance.***
 
-- <tt>`-s` or `--server`: Boot a darkscraper api server.</tt>
+- `-s` or `--server`: Boot a darkscraper api server.
 
-> <tt>Running the `-s` flag will boot a darkscraper api server with the following endpoints:</tt>
+> Running the `-s` flag will boot a darkscraper api server with the following endpoints:
 >
-> > <tt>`GET` `/fetch-dark-links`</tt>
+> > `GET` `/fetch-dark-links`
 > >
-> > <tt><h4>Query Params:</h4></tt>
-> > <tt>(`limit`: `number`): The maximum number of dark links to return.</tt>
+> > <h4>Query Params:</h4>
+> > (`limit`: `number`): The maximum number of dark links to return.
 > >
-> > <tt><h4>Response:</h4></tt>
+> > <h4>Response:</h4>
 > >
 > > ```json
 > > {
@@ -84,16 +84,16 @@ darkscraper <options>
 > > }
 > > ```
 >
-> > <tt>`GET` `/search-dark-links`</tt>
+> > `GET` `/search-dark-links`
 > >
-> > <tt><h4>Query Params:</h4></tt>
-> > <tt>(`search`: `string`): The search query.</tt>
+> > <h4>Query Params:</h4>
+> > (`search`: `string`): The search query.
 > >
-> > <tt>(`skip`: `number`): The number of dark links to skip (not search).</tt>
+> > (`skip`: `number`): The number of dark links to skip (not search).
 > >
-> > <tt>(`limit`: `number`): The number of dark links to return</tt>
+> > (`limit`: `number`): The number of dark links to return
 > >
-> > <tt><h4>Response:</h4></tt>
+> > <h4>Response:</h4>
 > >
 > > ```json
 > > {
@@ -114,31 +114,31 @@ darkscraper <options>
 > > }
 > > ```
 
-- <tt>`-p` or `--purge`: Purge your local dark link database.</tt>
+- `-p` or `--purge`: Purge your local dark link database.
 
-> <tt>Running the `-p` flag will delete all dark links in your local darkscraper dark link database.</tt>
+> Running the `-p` flag will delete all dark links in your local darkscraper dark link database.
 
-- <tt>`-k` or `--configure`: Open a darkcrawler configure prompt menu.</tt>
+- `-k` or `--configure`: Open a darkcrawler configure prompt menu.
 
-> <tt>Running the `-k` flag will open a darkscraper configure prompt menu in which you can configure your darkscraper instance and your darkscraper api server:</tt>
+> Running the `-k` flag will open a darkscraper configure prompt menu in which you can configure your darkscraper instance and your darkscraper api server:
 >
 > <img src="assets/configuremenu-screenshot.gif"/>
 
-- <tt>`-l` or `--loglevel`: Set the processes' log level. Applies to both the server and crawler instance.</tt>
+- `-l` or `--loglevel`: Set the processes' log level. Applies to both the server and crawler instance.
 
-- <tt>`-y` or `--yes`: Run the process without asking any questions. (Will still ask on `--purge`).</tt>
+- `-y` or `--yes`: Run the process without asking any questions. (Will still ask on `--purge`).
 
-<tt><h2>Author</h2></tt>
+<h2>Author</h2>
 
-👤 <tt><strong>Sihle Masebuku</strong></tt>
+👤 <strong>Sihle Masebuku</strong>
 
-- <tt>Github: [@sntsabode](https://github.com/sntsabode)</tt>
+- Github: [@sntsabode](https://github.com/sntsabode)
 
-<tt><h2>Show your support</h2></tt>
+<h2>Show your support</h2>
 
-<tt>Give a ⭐️ if this project helped you!</tt>
+Give a ⭐️ if this project helped you!
 
 ***
 
-<tt>
-<em>This README was generated with ❤️ by <a href="https://github.com/kefranabg/readme-md-generator">readme-md-generator</a></em></tt>
+
+<em>This README was generated with ❤️ by <a href="https://github.com/kefranabg/readme-md-generator">readme-md-generator</a></em>
